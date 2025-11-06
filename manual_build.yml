@@ -1,0 +1,50 @@
+name: Manual Objection Build ⚙️
+
+on:
+  # 1. Kích hoạt thủ công (Manual Trigger)
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Tên nhánh (branch) cần build'
+        required: true
+        default: 'main'
+      python_version:
+        description: 'Phiên bản Python (vd: 3.10)'
+        required: true
+        default: '3.10'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Checkout mã nguồn
+      - name: Checkout mã nguồn
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }} # Lấy mã nguồn từ nhánh được chỉ định thủ công
+
+      # 2. Thiết lập Python
+      - name: Thiết lập Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ github.event.inputs.python_version }}
+
+      # 3. Cài đặt Dependencies và Công cụ Build
+      - name: Cài đặt Dependencies
+        run: pip install -r requirements.txt
+        
+      - name: Cài đặt công cụ build
+        run: pip install build
+
+      # 4. Thực hiện Build
+      - name: Build Source và Wheel (sdist/wheel)
+        run: python -m build
+
+      # 5. Lưu trữ File Build (Artifacts)
+      - name: Lưu trữ các gói build (artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: objection-packages
+          path: dist/
+          retention-days: 7 # Lưu file trong 7 ngày
